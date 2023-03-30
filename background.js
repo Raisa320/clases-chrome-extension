@@ -31,8 +31,9 @@ chrome.runtime.onConnect.addListener(function (port) {
     if (message === "finish") {
       const status = await getObjectInLocalStorage("status");
       console.log(status)
-      //if (status === "start") 
-      port.postMessage({ message: "nextpage" });
+      if (status.status === "start") {
+        port.postMessage({ message: "nextpage" });
+      }
     }
   });
 });
