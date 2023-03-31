@@ -1,5 +1,4 @@
 console.log("Ejecutando el content script 1.0");
-
 function verifyBenefits(benefits) {
   if (benefits.className.includes("fresnel-container")) {
     return "No se detalla";
@@ -47,26 +46,37 @@ function getJobsInformation() {
   });
   return jobs;
 }
-
+function clickNextButton() {
+  const nextPageBtn = document.querySelector("[class*='next-']");
+  nextPageBtn.click();
+}
 //Connect to background
 const portBackground = chrome.runtime.connect({ name: "content-background" });
-
+portBackground.postMessage({ message: "online" });
 portBackground.onMessage.addListener(async ({ message }) => {
-  if (message === "nextpage") {
-    const nextPageBtn = document.querySelector("[class*='next-']");
-    nextPageBtn.click();
-    //portBackground.postMessage({ message: "startscrap" });
+  if (message === "scrap") {
+    const jobs = getJobsInformation();
+    clickNextButton();
+    //port.postMessage({ message: "ok", data: jobs });
+
+    // portBackground.postMessage({ message: "finish" });
   }
 });
 
 chrome.runtime.onConnect.addListener(function (port) {
   port.onMessage.addListener(function ({ message }) {
     console.log(`${port.name}: message`);
-    if (message === "getJobs") {
-      const jobs = getJobsInformation();
-      port.postMessage({ message: "ok", data: jobs });
 
-      portBackground.postMessage({ message: "finish" });
+    if (message === "scrap") {
+      const jobs = getJobsInformation();
+      const nextPageBtn = document.querySelector("[class*='next-']");
+      const message = !!nextPageBtn ? "next" : "";
+      console.log(message);
+      portBackground.postMessage({ message });
+      //clickNextButton();
+      //port.postMessage({ message: "ok", data: jobs });
+
+      // portBackground.postMessage({ message: "finish" });
     }
   });
 });

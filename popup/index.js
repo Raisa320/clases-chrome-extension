@@ -1,21 +1,11 @@
-const btnScripting = document.getElementById("btncomunicacion");
-const btnScriptingBackground = document.getElementById("btncomunicacionbckg");
+const btnScripting = document.getElementById("btnPaginar");
 const pMensaje = document.getElementById("mensajes");
 
-btnScripting.addEventListener("click", async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  let port = chrome.tabs.connect(tab.id, { name: "popup" });
-  port.postMessage({ message: "getJobs" });
-  port.onMessage.addListener(({ message,data }) => {
-    if(message==="ok")
-      pMensaje.innerText = JSON.stringify(data, null, 2);
-  });
-});
 
-btnScriptingBackground.addEventListener("click", async () => {
-  let port = chrome.runtime.connect({ name: "popup-background" });
-  port.postMessage({ message: "startscrap" });
-  port.onMessage.addListener(function ({ message }) {
-    alert(message);
-  });
+btnScripting.addEventListener("click", async () => {
+  const port = chrome.runtime.connect({ name: "popup-background" });
+  port.postMessage({ message: "start" });
+  // port.onMessage.addListener(({ data }) => {
+  //   pMensaje.innerText = JSON.stringify(data, null, 2);
+  // });
 });
