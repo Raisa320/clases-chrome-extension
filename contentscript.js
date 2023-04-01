@@ -46,37 +46,40 @@ function getJobsInformation() {
   });
   return jobs;
 }
-function clickNextButton() {
-  const nextPageBtn = document.querySelector("[class*='next-']");
-  nextPageBtn.click();
+
+function wait(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
+
 //Connect to background
 const portBackground = chrome.runtime.connect({ name: "content-background" });
+
 portBackground.postMessage({ message: "online" });
+
+function scrappingPages() {
+  const jobsByCity = getJobsInformation();
+  const nextPageBtn = document.querySelector("[class*='next-']");
+  const message = !nextPageBtn.className.includes("disabled-")
+    ? "next"
+    : "stop";
+  console.log(message);
+  portBackground.postMessage({ message, data: jobsByCity });
+}
+
 portBackground.onMessage.addListener(async ({ message }) => {
   if (message === "scrap") {
-    const jobs = getJobsInformation();
-    clickNextButton();
-    //port.postMessage({ message: "ok", data: jobs });
-
-    // portBackground.postMessage({ message: "finish" });
+    wait(3000);
+    scrappingPages();
   }
 });
 
 chrome.runtime.onConnect.addListener(function (port) {
   port.onMessage.addListener(function ({ message }) {
     console.log(`${port.name}: message`);
-
     if (message === "scrap") {
-      const jobs = getJobsInformation();
-      const nextPageBtn = document.querySelector("[class*='next-']");
-      const message = !!nextPageBtn ? "next" : "";
-      console.log(message);
-      portBackground.postMessage({ message });
-      //clickNextButton();
-      //port.postMessage({ message: "ok", data: jobs });
-
-      // portBackground.postMessage({ message: "finish" });
+      scrappingPages();
     }
   });
 });
