@@ -27,35 +27,46 @@ chrome.storage.local.set({ status: "stop" }).then(() => {
 });
 
 function addPageToUrl(url) {
+  const regexUrl = /\?.*$/;
+  const hasQuestionMark = regexUrl.test(url); //true
   const regex = /page=(\d+)/;
   const match = url.match(regex);
   const page = match && match[1];
+  if (hasQuestionMark && !page) {
+    return url + "&page=1";
+  }else if(!page){
+    return url + "?page=1"
+  }
   const newPage = parseInt(page) + 1;
   return url.replace(regex, `page=${newPage}`);
 }
 
-function groupByCity(jobsArray) {
-  console.log(jobsArray.length);
-  let personasPorEdad = jobsArray.reduce((acumulador, persona) => {
-    if (persona) {
-      if (!acumulador[persona?.companyCity]) {
-        acumulador[persona.companyCity] = [];
+function groupByCityAndSalary(jobsArray) {
+  let jobsByCity = jobsArray.reduce((acumulador, job) => {
+    if (job) {
+      if (!acumulador[job?.companyCity]) {
+        acumulador[job.companyCity] = [];
       }
-      acumulador[persona?.companyCity].push(persona);
+      acumulador[job?.companyCity].push(job);
     }
     return acumulador;
   }, {});
 
-  console.log(personasPorEdad);
-  // return jobsArray.reduce((groups, job) => {
-  //   if (job.companyCity) {
-  //     groups = groups ?? []
-  //     const jobGroup = groups[property] || [];
-  //     jobGroup.push(job);
-  //     groups[property] = jobGroup;
-  //     return groups;
-  //   }
-  // }, {});
+  let jobsByCityAndSalary = {};
+
+  Object.keys(jobsByCity).forEach((key) => {
+    const jobsBySalary = jobsByCity[key].reduce((acc, jobCity) => {
+      if (!acc[jobCity?.salary]) {
+        acc[jobCity.salary] = 0;
+      }
+      acc[jobCity?.salary]++;
+      return acc;
+    }, {});
+    jobsByCityAndSalary[key] = [];
+    jobsByCityAndSalary[key].push(jobsBySalary);
+  });
+
+  return jobsByCityAndSalary;
 }
 
 chrome.runtime.onConnect.addListener(function (port) {
@@ -97,10 +108,11 @@ chrome.runtime.onConnect.addListener(function (port) {
           console.log("El objeto dataJobs ha sido eliminado.");
         })
       );
-      console.log(dataJobsStorage.dataJobs);
-      const dataJobsStadistic = groupByCity(dataJobsStorage.dataJobs);
+
+      const dataJobsStadistic = groupByCityAndSalary(dataJobsStorage.dataJobs);
+      console.log(dataJobsStadistic)
       await saveObjectInLocalStorage({ status: "stop" });
-      chrome.runtime.sendMessage({ message: "ok", data: "dataJobsStadistic" });
+      chrome.runtime.sendMessage({ message: "ok", data: dataJobsStadistic });
       return;
     }
 

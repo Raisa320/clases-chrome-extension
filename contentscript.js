@@ -17,7 +17,7 @@ function getJobsInformation() {
             children: [
               { innerText: date },
               { innerText: title },
-              { innerText: salario },
+              { innerText: salary },
               benefits,
               infoCompany,
             ],
@@ -38,7 +38,7 @@ function getJobsInformation() {
       url,
       date: date.split("\n")[0],
       title,
-      salario,
+      salary,
       benefits: verifyBenefits(benefits),
       companyName,
       companyCity,
